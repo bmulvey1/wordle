@@ -1,4 +1,5 @@
 from functools import cache
+from math import pi
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.common.keys import Keys
@@ -29,14 +30,65 @@ def get_words():
 
 
  # x: [letter, letter], y: [[letter, pos], [letter, pos]], g: [[letter, pos], [letter, pos]]
-def filter_words(x, y, g, words):
+def filter_letters(x, y, g, words):
     # remove words w/ invalid letters
     new = [ele for ele in words if all(char not in ele for char in x)]
-    # remove words w/ yellow in same pos
-
+    # remove words w/ yellow in same pos but yellow in word
+    new1 = []
+    new2 = []
+    l = lambda let, pos, w: (w[pos] != let)
+    l1 = lambda let, w: let in w
+    if y == []:
+        new1 = new
+    else:
+        for group in y:
+            for word in new:
+                if(l(group[0], group[1], word) and word not in new1):
+                    new1.append(word)
+        for group in y: 
+            for word in new1:
+                if(l1(group[0], word) and word not in new2):
+                    new2.append(word)
     # remove words without green in same pos
+    new3 = []
+    l2 = lambda let, pos, w: w[pos] == let
+    if g == []:
+        new3 = new2
+    else:
+        for group in g:
+            for word in new2:
+                if(l2(group[0], group[1], word and word not in new3)):
+                    new3.append(word)
+    print(len(new), len(new1), len(new2), len(new3))
 
+    return new3
 
+def process_word(list, num, driver):
+    word = random.choice(list)
+    driver.find_element('tag name', 'body').send_keys(word + Keys.ENTER)
+
+    # get color for each letter in row 0
+    # body/game-app/shadow/game-theme-manager/div/div/div/<game-row letters=word0 length="5">
+    row = driver.execute_script("return document.querySelector('game-app').shadowRoot.querySelector('game-row:nth-child(%d)')._evaluation" % num)
+
+    x = []
+    y = []
+    g = []
+
+    for idx, i in enumerate(row):
+        if row[idx] == "absent":
+            x.append(word[idx])
+        if row[idx] == "present":
+            y.append([word[idx], idx])
+        if row[idx] == "correct":
+            g.append([word[idx], idx])
+
+    print(word)
+    print(x)
+    print(y)
+    print(g)
+
+    return x,y,g
 
 w_5let_clean = get_words()
 
@@ -55,9 +107,14 @@ driver.get("https://www.powerlanguage.co.uk/wordle/")
 #       button
 sleep(2)
 
-button = driver.execute_script("document.querySelector('game-app').shadowRoot.querySelector('game-modal').shadowRoot.querySelector('game-icon').click()")
+driver.execute_script("document.querySelector('game-app').shadowRoot.querySelector('game-modal').shadowRoot.querySelector('game-icon').click()")
 
-driver.find_element('tag name', 'body').send_keys(random.choice(w_5let_clean) + Keys.ENTER)
+wordlist = w_5let_clean
+
+for i in range(1,6):
+    x,y,g = process_word(wordlist, i, driver) 
+    wordlist = filter_letters(x,y,g,wordlist)
+    sleep(2)
 
 
 
