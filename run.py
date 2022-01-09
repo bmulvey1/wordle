@@ -20,9 +20,8 @@ def filter_words(inp):
 
 regex = re.compile(r'.*(.).*\1.*')
 
-@cached(cache=TTLCache(maxsize=1, ttl=86400))
 def get_words():
-    word_site = "http://www.instructables.com/files/orig/FLU/YE8L/H82UHPR8/FLUYE8LH82UHPR8.txt"
+    word_site = "https://gist.githubusercontent.com/bmulvey1/224dd1610f54e7d792589ee08c2f6399/raw/e8cebe9330a5b13157fdc015156673ced900c477/wordlist"
     site = requests.get(word_site)
     words = site.text.splitlines()
     w_5let = list(filter(lambda x: len(x) == 5, words))
@@ -39,15 +38,15 @@ def filter_letters(x, y, g, words):
     l = lambda let, pos, w: (w[pos] != let)
     l1 = lambda let, w: let in w
     if y == []:
-        new1 = new
+        new2 = new
     else:
         for group in y:
             for word in new:
-                if(l(group[0], group[1], word) and word not in new1):
+                if((word[group[1]] != group[0]) and word not in new1):
                     new1.append(word)
         for group in y: 
             for word in new1:
-                if(l1(group[0], word) and word not in new2):
+                if((group[0] in word) and word not in new2):
                     new2.append(word)
     # remove words without green in same pos
     new3 = []
@@ -57,7 +56,7 @@ def filter_letters(x, y, g, words):
     else:
         for group in g:
             for word in new2:
-                if(l2(group[0], group[1], word and word not in new3)):
+                if((word[group[1]] == group[0]) and word not in new3):
                     new3.append(word)
     print(len(new), len(new1), len(new2), len(new3))
 
@@ -74,10 +73,12 @@ def process_word(list, num, driver):
     x = []
     y = []
     g = []
+    global eliminated
 
     for idx, i in enumerate(row):
         if row[idx] == "absent":
             x.append(word[idx])
+            eliminated.append(word[idx])
         if row[idx] == "present":
             y.append([word[idx], idx])
         if row[idx] == "correct":
@@ -89,6 +90,9 @@ def process_word(list, num, driver):
     print(g)
 
     return x,y,g
+
+
+eliminated = []
 
 w_5let_clean = get_words()
 
@@ -111,9 +115,10 @@ driver.execute_script("document.querySelector('game-app').shadowRoot.querySelect
 
 wordlist = w_5let_clean
 
-for i in range(1,6):
+for i in range(1,7):
     x,y,g = process_word(wordlist, i, driver) 
     wordlist = filter_letters(x,y,g,wordlist)
+    print(eliminated)
     sleep(2)
 
 
