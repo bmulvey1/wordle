@@ -7,25 +7,16 @@ from webdriver_manager.firefox import GeckoDriverManager
 from time import sleep
 import requests
 import random
-import re
 from cachetools import cached, TTLCache
 from itertools import groupby
 
 
-def filter_words(inp):
-    for word in inp:
-        if regex.match(word) is None:
-            yield word
-
-
-regex = re.compile(r'.*(.).*\1.*')
-
+@cached(TTLCache(maxsize = 1,ttl=86400))
 def get_words():
     word_site = "https://gist.githubusercontent.com/bmulvey1/224dd1610f54e7d792589ee08c2f6399/raw/e8cebe9330a5b13157fdc015156673ced900c477/wordlist"
     site = requests.get(word_site)
     words = site.text.splitlines()
-    w_5let = list(filter(lambda x: len(x) == 5, words))
-    return list(filter_words(w_5let))
+    return words
 
 
  # x: [letter, letter], y: [[letter, pos], [letter, pos]], g: [[letter, pos], [letter, pos]]
