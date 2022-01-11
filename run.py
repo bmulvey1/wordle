@@ -33,32 +33,33 @@ def filter_letters(x, y, g, words):
     # remove words w/ invalid letters
     new = [ele for ele in words if all(char not in ele for char in x)]
     # remove words w/ yellow in same pos but yellow in word
+    # has same issue as green
     new1 = []
-    new2 = []
-    l = lambda let, pos, w: (w[pos] != let)
-    l1 = lambda let, w: let in w
     if y == []:
-        new2 = new
+        new1 = new
     else:
-        for group in y:
-            for word in new:
-                if((word[group[1]] != group[0]) and word not in new1):
-                    new1.append(word)
-        for group in y: 
-            for word in new1:
-                if((group[0] in word) and word not in new2):
-                    new2.append(word)
+
+        for word in new:
+            all_in = True
+            for group in y:
+                if (group[0] not in word) or (word[group[1]] == group[0]):
+                    all_in = False
+            if all_in and word not in new1:
+                new1.append(word)
     # remove words without green in same pos
     new3 = []
-    l2 = lambda let, pos, w: w[pos] == let
     if g == []:
-        new3 = new2
+        new3 = new1
     else:
-        for group in g:
-            for word in new2:
-                if((word[group[1]] == group[0]) and word not in new3):
-                    new3.append(word)
-    print(len(new), len(new1), len(new2), len(new3))
+        for word in new1:
+            all_in = True
+            for group in g:
+                if word[group[1]] != group[0]:
+                    all_in = False
+            if all_in and (word not in new3):
+                new3.append(word)
+
+    print(len(new), len(new1), len(new3))
 
     return new3
 
@@ -76,13 +77,14 @@ def process_word(list, num, driver):
     global eliminated
 
     for idx, i in enumerate(row):
-        if row[idx] == "absent":
+        if i == "absent":
             x.append(word[idx])
             eliminated.append(word[idx])
-        if row[idx] == "present":
+        if i == "present":
             y.append([word[idx], idx])
-        if row[idx] == "correct":
+        if i == "correct":
             g.append([word[idx], idx])
+    
 
     print(word)
     print(x)
@@ -109,7 +111,7 @@ driver.get("https://www.powerlanguage.co.uk/wordle/")
 # game-app -> shadow
 #   game-modal -> shadow
 #       button
-sleep(2)
+#sleep(2)
 
 driver.execute_script("document.querySelector('game-app').shadowRoot.querySelector('game-modal').shadowRoot.querySelector('game-icon').click()")
 
@@ -119,7 +121,6 @@ for i in range(1,7):
     x,y,g = process_word(wordlist, i, driver) 
     wordlist = filter_letters(x,y,g,wordlist)
     print(eliminated)
+    if(len(g)==5): # every letter is correct, terminate
+        exit()
     sleep(2)
-
-
-
