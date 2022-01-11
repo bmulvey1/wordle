@@ -1,5 +1,3 @@
-from functools import cache
-from math import pi
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.common.keys import Keys
@@ -9,7 +7,6 @@ import requests
 import random
 import re
 from cachetools import cached, TTLCache
-from itertools import groupby
 
 
 def filter_words(inp):
@@ -20,6 +17,7 @@ def filter_words(inp):
 
 regex = re.compile(r'.*(.).*\1.*')
 
+@cached(TTLCache(maxsize=1, ttl=86400))
 def get_words():
     word_site = "https://gist.githubusercontent.com/bmulvey1/224dd1610f54e7d792589ee08c2f6399/raw/e8cebe9330a5b13157fdc015156673ced900c477/wordlist"
     site = requests.get(word_site)
